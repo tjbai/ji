@@ -1,0 +1,18 @@
+[project]
+name = "ji"
+version = "0.1.0"
+description = "minimal CLI-based task tracker"
+readme = "README.md"
+authors = [
+    { name = "TJ Bai", email = "tjianbai@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = ["click>=8.1.8",
+]
+
+[project.scripts]
+ji = "ji.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
