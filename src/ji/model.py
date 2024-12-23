@@ -130,6 +130,7 @@ class Repo:
                     task_map={}
                 )
 
+            self._write_wal(page)
             json.dump(asdict(page), f)
 
     @contextmanager
