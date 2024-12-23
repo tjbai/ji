@@ -1,4 +1,4 @@
-import time
+import subprocess
 import click
 
 from .model import Status, Comment, Task, Repo
@@ -11,7 +11,14 @@ def cli(ctx: click.Context, p: int | None) -> None:
     repo = Repo()
     ctx.obj = (repo, repo.get_wp() if p is None else p)
 
+@cli.command(name='e')
+@click.pass_obj
+def edit(ctx: tuple[Repo, int]) -> None:
+    repo, _ = ctx
+    subprocess.run(['vi', repo.pages_dir])
+
 @cli.command(name='n')
+@click.confirmation_option(prompt='Are you sure?')
 @click.pass_obj
 def new(ctx: tuple[Repo, int]) -> None:
     repo, _ = ctx
@@ -28,7 +35,7 @@ def status(ctx: tuple[Repo, int], n: int, p: int | None, v: bool) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
         if page is None:
-            click.echo('could not find page')
+            click.echo('Could not find page')
             return
 
         pprint(page, verbose=v)
@@ -41,7 +48,7 @@ def touch(ctx: tuple[Repo, int], content: str, d: int) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
         if page is None:
-            click.echo('could not find page')
+            click.echo('Could not find page')
             return
 
         id = len(page.task_map)
@@ -57,21 +64,21 @@ def touch(ctx: tuple[Repo, int], content: str, d: int) -> None:
 
 @cli.command(name='rm')
 @click.argument('id', type=int)
-@click.confirmation_option(prompt='are you sure?')
+@click.confirmation_option(prompt='Are you sure?')
 @click.pass_obj
 def remove(ctx: tuple[Repo, int], id: int) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
         if page is None:
-            click.echo('could not find page')
+            click.echo('Could not find page')
             return
 
         if id not in page.task_map:
-            click.echo('task does not exist')
+            click.echo('Task does not exist')
             return
 
         del page.task_map[id]
-        click.echo('done')
+        click.echo('Done')
 
 @cli.command(name='a')
 @click.argument('id', type=int)
@@ -80,7 +87,7 @@ def add(ctx: tuple[Repo, int], id: int) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
         if page is None:
-            click.echo('could not find page')
+            click.echo('Could not find page')
             return
 
         if (task := page.task_map.get(id)) is None:
@@ -97,15 +104,15 @@ def restore(ctx: tuple[Repo, int], id: int) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
         if page is None:
-            click.echo('could not find page')
+            click.echo('Could not find page')
             return
 
         if (task := page.task_map.get(id)) is None:
-            click.echo('task does not exist')
+            click.echo('Task does not exist')
             return
 
         if task.status != Status.STAGED:
-            click.echo('task not currently staged')
+            click.echo('Task not currently staged')
             return
 
         task.status = Status.TODO
@@ -118,11 +125,11 @@ def comment(ctx: tuple[Repo, int], content: str) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
         if page is None:
-            click.echo('could not find page')
+            click.echo('Could not find page')
             return
 
         if len((staged := page.filter(Status.STAGED))) == 0:
-            click.echo('no staged tasks')
+            click.echo('No staged tasks')
             return
 
         for task in staged:
@@ -136,11 +143,11 @@ def push(ctx: tuple[Repo, int]) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
         if page is None:
-            click.echo('could not find page')
+            click.echo('Could not find page')
             return
 
         if len((staged := page.filter(Status.STAGED))) == 0:
-            click.echo('no staged tasks')
+            click.echo('No staged tasks')
             return
 
         for task in staged:

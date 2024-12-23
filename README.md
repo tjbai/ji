@@ -5,7 +5,7 @@ ji n:
 ji st [-n N] [-v/-nv]:
     show working page
 
-ji t CONTENT:
+ji t CONTENT [-d D]:
     create a task
 
 ji rm ID:
@@ -22,6 +22,9 @@ ji p:
 
 ji c CONTENT:
     append comment to all staged tasks
+
+ji e:
+    directly edit pages directory
 ```
 
 ```

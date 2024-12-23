@@ -62,8 +62,20 @@ class Page:
     def filter(self, status: Status) -> list[Task]:
         return [task for task in self.task_map.values() if task.status == status]
 
-class Repo:
+@dataclass
+class WalEvent:
+    id: int
+    page: Page
+    timestamp: str
 
+    def __str__(self) -> str:
+        return json.dumps({
+            'id': self.id,
+            'page': asdict(self.page),
+            'timestamp': self.timestamp
+        })
+
+class Repo:
     base_dir = Path.home() / '.ji'
     pages_dir = base_dir / 'pages'
     wal_dir = base_dir / 'wal'
@@ -71,7 +83,7 @@ class Repo:
 
     def __init__(self) -> None:
         self.event_time = datetime.now().isoformat()
-        if not os.path.exists(self.base_dir):
+        if not self.base_dir.exists():
             os.makedirs(self.pages_dir)
             os.makedirs(self.wal_dir)
             self.set_wp(0)
@@ -79,6 +91,16 @@ class Repo:
         else:
             with open(self.wp_path, 'r') as f:
                 self.wp = int(f.readlines()[0])
+
+    # not using this rn
+    def _write_wal(self, page: Page) -> None:
+        dt = datetime.fromisoformat(self.event_time)
+        dir = self.wal_dir / f'{dt.year}' / f'{dt.month:02d}'
+        if not dir.exists(): os.makedirs(dir)
+        event = WalEvent(id=page.id, page=page, timestamp=self.event_time)
+        with open(dir / 'events.log', 'a') as f:
+            f.write(str(event))
+            f.write('\n')
 
     def get_wp(self) -> int:
         return self.wp
@@ -104,6 +126,7 @@ class Repo:
                     last_modified=self.event_time,
                     task_map={}
                 )
+
             json.dump(asdict(page), f)
 
     @contextmanager
