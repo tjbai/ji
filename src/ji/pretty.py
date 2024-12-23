@@ -12,12 +12,7 @@ def format_time(ts: str) -> str:
 
 def format_relative(ts: str) -> str:
     dt = datetime.fromisoformat(ts)
-    now = datetime.now(timezone.utc)
-
-    if dt.tzinfo:
-        now = now
-    else:
-        now = now.replace(tzinfo=None)
+    now = datetime.now()
 
     delta = now - dt
     seconds = delta.total_seconds()
