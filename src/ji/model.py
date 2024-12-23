@@ -130,11 +130,10 @@ class Repo:
                     task_map={}
                 )
 
-            self._write_wal(page)
             json.dump(asdict(page), f)
 
     @contextmanager
-    def get_working_page(self, p: int | None = None) -> Iterator[Page | None]:
+    def get_working_page(self, p: int | None = None, disable_wal: bool = False) -> Iterator[Page | None]:
         cp = self.wp if p is None else p
         page = self.get_page(cp)
         try:
@@ -142,4 +141,5 @@ class Repo:
         finally:
             if page is not None:
                 page.last_modified = self.event_time
+                if not disable_wal: self._write_wal(page)
                 self.write_page(cp, page)

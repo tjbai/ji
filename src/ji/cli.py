@@ -34,7 +34,7 @@ def new(ctx: tuple[Repo, int]) -> None:
 @click.pass_obj
 def status(ctx: tuple[Repo, int], n: int, p: int | None, v: bool) -> None:
     repo, p = ctx
-    with repo.get_working_page(p) as page:
+    with repo.get_working_page(p, disable_wal=True) as page:
         if page is None:
             click.echo('Could not find page')
             return
