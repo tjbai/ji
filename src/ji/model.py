@@ -86,7 +86,10 @@ class Repo:
             f.write(str(id))
             self.wp = id
 
-    def get_page(self, id: int) -> Page:
+    def get_page(self, id: int) -> Page | None:
+        if not os.path.exists(self.pages_dir / f'page_{id}.json'):
+            return None
+
         with open(self.pages_dir / f'page_{id}.json', 'r') as f:
             return Page.from_dict(json.load(f))
 
@@ -102,10 +105,12 @@ class Repo:
             json.dump(asdict(page), f)
 
     @contextmanager
-    def get_working_page(self) -> Iterator[Page]:
-        page = self.get_page(self.wp)
+    def get_working_page(self, p: int | None = None) -> Iterator[Page | None]:
+        cp = self.wp if p is None else p
+        page = self.get_page(cp)
         try:
             yield page
         finally:
-            page.last_modified = self.event_time
-            self.write_page(self.wp, page)
+            if page is not None:
+                page.last_modified = self.event_time
+                self.write_page(cp, page)

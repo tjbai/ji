@@ -1,4 +1,4 @@
-# api
+# help
 ```
 ji n:
     create new page
