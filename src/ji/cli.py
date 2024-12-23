@@ -8,47 +8,6 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 
 '''
-ji new (jn):
-    make new page
-
-ji status (jst) [-n N]:
-    show status of past N days
-
-ji create (jic):
-    create new task
-
-ji add (ja):
-    stage a task
-
-ji restore, jr:
-    unstage a task
-
-ji push, jp:
-    mark all currently staged tasks as complete
-
-ji edit, je, -n N=1:
-    interactive editor
-
-ji comment, jc:
-    append comment to all staged tasks
-
-Status: TODO | STAGED | PUSHED
-
-Task: {
-    task_id: int,
-    status: Status,
-    content: string,
-    created_at: datetime,
-    last_modified: datetime,
-}
-
-Page: {
-    created_at: datetime,
-    last_modified: datetime,
-    task_map: Dict[int, Task]
-}
-
-event: # some kind of case class
 '''
 
 class Status(str, Enum):
@@ -163,11 +122,11 @@ def status(repo: Repo, n: int) -> None:
         for id, task in page.task_map.items():
             print(f'{task.status} {id} {task.content}')
 
-@cli.command(name='c')
+@cli.command(name='t')
 @click.argument('content')
 @click.option('--status', type=click.Choice(['TODO', 'STAGED', 'PUSHED']), default='TODO')
 @click.pass_obj
-def create(repo: Repo, content: str, status: str) -> None:
+def touch(repo: Repo, content: str, status: str) -> None:
     with repo.get_working_page() as page:
         id = len(page.task_map)
         page.task_map[id] = Task(
@@ -205,6 +164,12 @@ def restore(repo: Repo, id: int) -> None:
 
         task.status = Status.TODO
         print(f'restored {task}')
+
+@cli.command(name='c')
+@click.argument('message')
+@click.pass_obj
+def comment(repo: Repo, message: str) -> None:
+    pass
 
 @cli.command(name='p')
 @click.pass_obj
