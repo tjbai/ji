@@ -4,6 +4,8 @@ import click
 from datetime import datetime
 from pathlib import Path
 from contextlib import contextmanager
+from dataclasses import dataclass, asdict
+from enum import Enum
 
 '''
 ji new (jn):
@@ -21,16 +23,14 @@ ji add (ja):
 ji restore, jr:
     unstage a task
 
-ji comment, jc:
-    append comment to all staged tasks
-
 ji push, jp:
     mark all currently staged tasks as complete
 
 ji edit, je, -n N=1:
     interactive editor
 
-####
+ji comment, jc:
+    append comment to all staged tasks
 
 Status: TODO | STAGED | PUSHED
 
@@ -50,6 +50,43 @@ Page: {
 
 event: # some kind of case class
 '''
+
+class Status(str, Enum):
+    TODO = 'TODO'
+    STAGED = 'STAGED'
+    PUSHED = 'PUSHED'
+
+@dataclass
+class Task:
+    status: Status
+    content: str
+    comments: list[str]
+    created_at: str
+    last_modified: str
+
+@dataclass
+class Page:
+    created_at: str
+    last_modified: str
+    task_map: dict[int, Task]
+
+    @classmethod
+    def from_dict(cls, data: dict) -> 'Page':
+        task_map = {
+            int(k): Task(
+                status=Status(v['status']),
+                content=v['content'],
+                comments=v['comments'],
+                created_at=v['created_at'],
+                last_modified=v['last_modified']
+            ) for k, v in data['task_map'].items()
+        }
+
+        return cls(
+            created_at=data['created_at'],
+            last_modified=data['last_modified'],
+            task_map=task_map
+        )
 
 class Repo:
     '''
@@ -86,15 +123,15 @@ class Repo:
             f.write(str(id))
             self.wp = id
 
-    def get_page(self, id: int) -> dict:
+    def get_page(self, id: int) -> Page:
         with open(self.pages_dir / f'page_{id}.json', 'r') as f:
-            return json.load(f)
+            return Page.from_dict(json.load(f))
 
-    def write_page(self, id: int, content: dict = None) -> None:
+    def write_page(self, id: int, page: Page = None) -> None:
         with open(self.pages_dir / f'page_{id}.json', 'w') as f:
-            if content is None:
-                content = {'created_at': self.event_time, 'last_modified': self.event_time, 'task_map': {}}
-            json.dump(content, f)
+            if page is None:
+                page = Page(created_at=self.event_time, last_modified=self.event_time, task_map={})
+            json.dump(asdict(page), f)
 
     @contextmanager
     def get_working_page(self) -> dict:
@@ -102,7 +139,7 @@ class Repo:
         try:
             yield page
         finally:
-            page['last_modified'] = self.event_time
+            page.last_modified = self.event_time
             return self.write_page(self.wp, page)
 
 @click.group
@@ -110,59 +147,76 @@ class Repo:
 def cli(ctx: click.Context) -> None:
     ctx.obj = Repo()
 
-@cli.command
+@cli.command(name='n')
 @click.pass_obj
 def new(repo: Repo) -> None:
     wp = repo.get_wp()
     repo.set_wp(wp + 1)
     repo.write_page(wp + 1)
 
-@cli.command()
+@cli.command(name='st')
 @click.option('--n', default=1)
 @click.pass_obj
 def status(repo: Repo, n: int) -> None:
     with repo.get_working_page() as page:
-        print(f'{page['created_at']}, {page['last_modified']}')
-        for id, task in page['task_map'].items():
-            print(f'{task['status']} {id} {task['content']}')
+        print(f'{page.created_at}, {page.last_modified}')
+        for id, task in page.task_map.items():
+            print(f'{task.status} {id} {task.content}')
 
-@cli.command
+@cli.command(name='c')
 @click.argument('content')
 @click.option('--status', type=click.Choice(['TODO', 'STAGED', 'PUSHED']), default='TODO')
 @click.pass_obj
 def create(repo: Repo, content: str, status: str) -> None:
     with repo.get_working_page() as page:
-        id = len(page['task_map'])
-        page['task_map'][id] = {
-            'status': status,
-            'content': content,
-            'comments': [],
-            'last_modified': repo.event_time,
-            'created_at': repo.event_time
-        }
+        id = len(page.task_map)
+        page.task_map[id] = Task(
+            status=Status(status),
+            content=content,
+            comments=[],
+            last_modified=repo.event_time,
+            created_at=repo.event_time
+        )
 
-@cli.command
-@click.argument('id')
+@cli.command(name='a')
+@click.argument('id', type=int)
 @click.pass_obj
 def add(repo: Repo, id: int) -> None:
     with repo.get_working_page() as page:
-        if id not in page['task_map']:
+        if (task := page.task_map.get(id)) is None:
             print('task does not exist')
             return
 
-        page['task_map'][id]['status'] = 'STAGED'
+        task.status = Status.STAGED
+        print(f'staged {task}')
 
-@cli.command
-@click.argument('id')
+@cli.command(name='rs')
+@click.argument('id', type=int)
 @click.pass_obj
 def restore(repo: Repo, id: int) -> None:
     with repo.get_working_page() as page:
-        if id not in page['task_map']:
+        if (task := page.task_map.get(id)) is None:
             print('task does not exist')
             return
 
-        if page['task_map'][id]['status'] != 'STAGED':
+        if task.status != Status.STAGED:
             print('task not currently staged')
             return
 
-        page['task_map'][id]['status'] = 'TODO'
+        task.status = Status.TODO
+        print(f'restored {task}')
+
+@cli.command(name='p')
+@click.pass_obj
+def push(repo: Repo) -> None:
+    with repo.get_working_page() as page:
+        staged = [task for task in page.task_map.values() if task.status == Status.STAGED]
+
+        if len(staged) == 0:
+            print('no staged tasks')
+            return
+
+        print('pushed...')
+        for task in staged:
+            task.status = Status.PUSHED
+            print(f'\t{task}')
