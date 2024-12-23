@@ -61,15 +61,6 @@ class Page:
         return [task for task in self.task_map.values() if task.status == status]
 
 class Repo:
-    '''
-    ~/.ji/
-        pages/
-            page_{id}.json
-        wal/
-            YYYY_MM/
-                events_{DD}.log
-        wp
-    '''
 
     base_dir = Path.home() / '.ji'
     pages_dir = base_dir / 'pages'

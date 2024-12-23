@@ -1,25 +1,34 @@
+# api
 ```
-ji new (ji n):
-    make new page
+ji n:
+    create new page
 
-ji status (ji st) [-n N]:
-    show status of past N days
+ji st [-n N] [-p P] [-v/-nv]:
+    show working page
 
-ji touch (ji t):
-    create new task
+ji t CONTENT:
+    create a task
 
-ji add (ji a):
+ji a ID:
     stage a task
 
-ji restore, (j rs):
+ji rs ID:
     unstage a task
 
-ji push, (j p):
+ji p:
     mark all currently staged tasks as complete
 
-ji edit, (j e), -n N=1:
-    interactive editor
-
-ji comment, jc:
+ji c CONTENT:
     append comment to all staged tasks
+```
+
+# on-disk:
+```
+~/.ji/
+    pages/
+        page_{id}.json
+    wal/
+        YYYY_MM/
+            events_{DD}.log
+    wp
 ```

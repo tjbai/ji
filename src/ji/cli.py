@@ -17,17 +17,19 @@ def new(repo: Repo) -> None:
 
 @cli.command(name='st')
 @click.option('-n', default=1)
+@click.option('-p', default=None, type=int)
 @click.option('-v/-nv', default=False)
 @click.pass_obj
-def status(repo: Repo, n: int, v: bool) -> None:
-    with repo.get_working_page() as page:
-        pprint(page, verbose=v)
+def status(repo: Repo, n: int, p: int | None, v: bool) -> None:
+    if p is None:
+        with repo.get_working_page() as page:
+            pprint(page, verbose=v)
+            return
 
 @cli.command(name='t')
 @click.argument('content')
-@click.option('--status', type=click.Choice(['TODO', 'STAGED', 'PUSHED']), default='TODO')
 @click.pass_obj
-def touch(repo: Repo, content: str, status: str) -> None:
+def touch(repo: Repo, content: str) -> None:
     with repo.get_working_page() as page:
         id = len(page.task_map)
         page.task_map[id] = Task(
