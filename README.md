@@ -24,7 +24,7 @@ ji c CONTENT:
     append comment to all staged tasks
 
 ji e:
-    directly edit pages directory
+    edit pages directory
 
 ji b:
     generate html
