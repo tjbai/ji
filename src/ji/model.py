@@ -29,6 +29,7 @@ class Task:
     comment_list: list[Comment]
     created_at: str
     last_modified: str
+    difficulty: int = 1
 
 @dataclass
 class Page:
@@ -46,7 +47,8 @@ class Page:
                 content=v['content'],
                 comment_list=[Comment.from_dict(c_dict) for c_dict in v['comment_list']],
                 created_at=v['created_at'],
-                last_modified=v['last_modified']
+                last_modified=v['last_modified'],
+                difficulty=v.get('difficulty', 1)
             ) for k, v in data['task_map'].items()
         }
 

@@ -1,7 +1,8 @@
+import time
 import click
 
 from .model import Status, Comment, Task, Repo
-from .pretty import pprint
+from .pretty import pprint, celebrate
 
 @click.group
 @click.pass_context
@@ -34,8 +35,9 @@ def status(ctx: tuple[Repo, int], n: int, p: int | None, v: bool) -> None:
 
 @cli.command(name='t')
 @click.argument('content')
+@click.option('-d', default=1)
 @click.pass_obj
-def touch(ctx: tuple[Repo, int], content: str) -> None:
+def touch(ctx: tuple[Repo, int], content: str, d: int) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
         if page is None:
@@ -49,7 +51,8 @@ def touch(ctx: tuple[Repo, int], content: str) -> None:
             content=content,
             comment_list=[],
             last_modified=repo.event_time,
-            created_at=repo.event_time
+            created_at=repo.event_time,
+            difficulty=d
         )
 
 @cli.command(name='rm')
@@ -85,13 +88,18 @@ def add(ctx: tuple[Repo, int], id: int) -> None:
             return
 
         task.status = Status.STAGED
-        click.echo(f'staged {task}')
+        click.echo('done')
 
 @cli.command(name='rs')
 @click.argument('id', type=int)
 @click.pass_obj
 def restore(ctx: tuple[Repo, int], id: int) -> None:
-    with repo.get_working_page() as page:
+    repo, p = ctx
+    with repo.get_working_page(p) as page:
+        if page is None:
+            click.echo('could not find page')
+            return
+
         if (task := page.task_map.get(id)) is None:
             click.echo('task does not exist')
             return
@@ -101,7 +109,7 @@ def restore(ctx: tuple[Repo, int], id: int) -> None:
             return
 
         task.status = Status.TODO
-        click.echo(f'restored {task}')
+        click.echo('done')
 
 @cli.command(name='c')
 @click.argument('content')
@@ -135,7 +143,8 @@ def push(ctx: tuple[Repo, int]) -> None:
             click.echo('no staged tasks')
             return
 
-        click.echo('pushed...')
+        for task in staged:
+            celebrate(task.difficulty, task.content)
+
         for task in staged:
             task.status = Status.PUSHED
-            click.echo(f'\t{task}')

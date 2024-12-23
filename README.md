@@ -1,13 +1,15 @@
-# help
 ```
 ji n:
     create new page
 
-ji st [-n N] [-p P] [-v/-nv]:
+ji st [-n N] [-v/-nv]:
     show working page
 
 ji t CONTENT:
     create a task
+
+ji rm ID:
+    remove a task
 
 ji a ID:
     stage a task
@@ -22,7 +24,6 @@ ji c CONTENT:
     append comment to all staged tasks
 ```
 
-# on-disk:
 ```
 ~/.ji/
     pages/

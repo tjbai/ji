@@ -1,12 +1,33 @@
+import time
 from datetime import datetime
 from rich.tree import Tree
 from rich.text import Text
 from rich.console import Console
+from rich.progress import Progress, BarColumn, TextColumn, TaskProgressColumn
 from .model import Page, Task, Status
 
 def format_time(ts: str) -> str:
     dt = datetime.fromisoformat(ts)
     return dt.strftime('%m/%d/%Y %H:%M')
+
+def celebrate(difficulty: int, task_content: str) -> None:
+    duration = 0.85 * difficulty
+    console = Console()
+
+    with Progress(
+        TextColumn("[bold blue]{task.description}"),
+        BarColumn(complete_style="green", finished_style="green"),
+        TaskProgressColumn(),
+        console=console,
+        transient=True
+    ) as progress:
+        task = progress.add_task(task_content, total=100)
+
+        while not progress.finished:
+            progress.update(task, advance=1)
+            time.sleep(duration / 200)
+
+        console.print(Text(text=f'done! {task_content}', style='bold green'))
 
 def create_section_tree(title: str, tasks: list[Task], style: str, verbose: bool) -> Tree:
     branch = Tree(Text(title, style=f"bold {style}"))
