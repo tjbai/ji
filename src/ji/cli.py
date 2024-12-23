@@ -3,6 +3,7 @@ import json
 import click
 from datetime import datetime
 from pathlib import Path
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -47,6 +48,9 @@ class Page:
             task_map=task_map
         )
 
+    def filter(self, status: Status) -> list[Task]:
+        return [task for task in self.task_map.values() if task.status == status]
+
 class Repo:
     '''
     ~/.ji/
@@ -86,20 +90,20 @@ class Repo:
         with open(self.pages_dir / f'page_{id}.json', 'r') as f:
             return Page.from_dict(json.load(f))
 
-    def write_page(self, id: int, page: Page = None) -> None:
+    def write_page(self, id: int, page: Page | None = None) -> None:
         with open(self.pages_dir / f'page_{id}.json', 'w') as f:
             if page is None:
                 page = Page(created_at=self.event_time, last_modified=self.event_time, task_map={})
             json.dump(asdict(page), f)
 
     @contextmanager
-    def get_working_page(self) -> dict:
+    def get_working_page(self) -> Iterator[Page]:
         page = self.get_page(self.wp)
         try:
             yield page
         finally:
             page.last_modified = self.event_time
-            return self.write_page(self.wp, page)
+            self.write_page(self.wp, page)
 
 @click.group
 @click.pass_context
@@ -169,13 +173,14 @@ def restore(repo: Repo, id: int) -> None:
 @click.argument('message')
 @click.pass_obj
 def comment(repo: Repo, message: str) -> None:
-    pass
+    with repo.get_working_page() as page:
+        staged = page.filter(Status.STAGED)
 
 @cli.command(name='p')
 @click.pass_obj
 def push(repo: Repo) -> None:
     with repo.get_working_page() as page:
-        staged = [task for task in page.task_map.values() if task.status == Status.STAGED]
+        staged = page.filter(Status.STAGED)
 
         if len(staged) == 0:
             print('no staged tasks')
