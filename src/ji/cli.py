@@ -3,6 +3,7 @@ import click
 
 from .model import Status, Comment, Task, Repo
 from .pretty import pprint, celebrate
+from .html import generate
 
 @click.group
 @click.pass_context
@@ -155,3 +156,9 @@ def push(ctx: tuple[Repo, int]) -> None:
 
         for task in staged:
             task.status = Status.PUSHED
+
+@cli.command(name='b')
+@click.pass_obj
+def build(ctx: tuple[Repo, int]) -> None:
+    repo, _ = ctx
+    generate(repo)

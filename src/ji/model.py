@@ -78,8 +78,11 @@ class WalEvent:
 class Repo:
     base_dir = Path.home() / '.ji'
     pages_dir = base_dir / 'pages'
-    wal_dir = base_dir / 'wal'
+    build_dir = base_dir / 'build'
     wp_path = base_dir / 'wp'
+
+    # not using this rn
+    wal_dir = base_dir / 'wal'
 
     def __init__(self) -> None:
         self.event_time = datetime.now().isoformat()

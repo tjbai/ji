@@ -25,6 +25,9 @@ ji c CONTENT:
 
 ji e:
     directly edit pages directory
+
+ji b:
+    generate html
 ```
 
 ```
