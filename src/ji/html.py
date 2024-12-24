@@ -20,12 +20,12 @@ def generate(repo: Repo):
 :root {
     --width: 900px;
     --font-main: "Azeret Mono", monospace;
-    --bg-color: #1a1b1e;
-    --text-color: #c4c7c5;
-    --dim-color: #808080;
-    --todo-color: #98C379;
-    --stage-color: #E5C07B;
-    --done-color: #E06C75;
+    --bg-color: #282828;
+    --text-color: #ebdbb2;
+    --dim-color: #928374;
+    --todo-color: #98971a;
+    --stage-color: #d79921;
+    --done-color: #cc241d;
     --font-scale: 1em;
 }
 
