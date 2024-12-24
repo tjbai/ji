@@ -11,120 +11,153 @@ def generate(repo: Repo):
 
     pages = sorted(pages, key=lambda x: x.id, reverse=True)
 
-    html_content = '''<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-<title>记</title><style>
-:root {
-    --width: 900px;
-    --font-main: "Azeret Mono", monospace;
-    --bg-color: #282828;
-    --text-color: #ebdbb2;
-    --dim-color: #928374;
-    --todo-color: #98971a;
-    --stage-color: #d79921;
-    --done-color: #cc241d;
-    --font-scale: 1em;
-}
+    html_content = '''
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <title>记</title>
+    <style>
+        :root {
+            --width: 900px;
+            --font-main: "Azeret Mono", monospace;
+            --bg-color: #282828;
+            --text-color: #ebdbb2;
+            --dim-color: #928374;
+            --todo-color: #98971a;
+            --stage-color: #d79921;
+            --done-color: #cc241d;
+            --font-scale: 1em;
+        }
 
-body {
-    font-family: var(--font-main);
-    font-size: var(--font-scale);
-    margin: 2rem auto;
-    padding: 20px;
-    max-width: var(--width);
-    text-align: left;
-    background-color: var(--bg-color);
-    word-wrap: break-word;
-    line-height: 1.6;
-    color: var(--text-color);
-}
+        body {
+            font-family: var(--font-main);
+            font-size: var(--font-scale);
+            margin: 2rem auto;
+            padding: 20px;
+            max-width: var(--width);
+            text-align: left;
+            background-color: var(--bg-color);
+            word-wrap: break-word;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
 
-.page { margin-bottom: 3em; }
+        body.light {
+            --bg-color: #fbf1c7;
+            --text-color: #3c3836;
+            --dim-color: #928374;
+            --todo-color: #79740e;
+            --stage-color: #b57614;
+            --done-color: #9d0006;
+        }
 
-.page-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1em;
-    cursor: pointer;
-    user-select: none;
-}
+        .page { margin-bottom: 3em; }
 
-.section {
-    margin: 0.5em 0 0.5em 1.5em;
-    padding-left: 1em;
-    border-left: 1px solid var(--dim-color);
-}
+        .page-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1em;
+            cursor: pointer;
+            user-select: none;
+        }
 
-.section-header {
-    color: var(--dim-color);
-    margin: 1em 0;
-    cursor: pointer;
-    user-select: none;
-}
+        .section {
+            margin: 0.5em 0 0.5em 1.5em;
+            padding-left: 1em;
+            border-left: 1px solid var(--dim-color);
+        }
 
-.task {
-    display: flex;
-    align-items: flex-start;
-    margin: 0.5em 0;
-    padding-left: 1.5em;
-}
+        .section-header {
+            color: var(--dim-color);
+            margin: 1em 0;
+            cursor: pointer;
+            user-select: none;
+        }
 
-.task-id {
-    color: var(--dim-color);
-    margin-right: 1em;
-    min-width: 2em;
-    text-align: right;
-}
+        .task {
+            display: flex;
+            align-items: flex-start;
+            margin: 0.5em 0;
+            padding-left: 1.5em;
+        }
 
-.todo { color: var(--todo-color); }
-.staged { color: var(--stage-color); }
-.pushed { color: var(--done-color); }
+        .task-id {
+            color: var(--dim-color);
+            margin-right: 1em;
+            min-width: 2em;
+            text-align: right;
+        }
 
-.comments {
-    margin: 0.3em 0 0.3em 3em;
-    color: var(--dim-color);
-    font-size: 0.9em;
-}
+        .todo { color: var(--todo-color); }
+        .staged { color: var(--stage-color); }
+        .pushed { color: var(--done-color); }
 
-.dim {
-    color: var(--dim-color);
-}
+        .comments {
+            margin: 0.3em 0 0.3em 3em;
+            color: var(--dim-color);
+            font-size: 0.8em;
+        }
 
-.timestamp {
-    color: var(--dim-color);
-    font-size: 0.9em;
-    margin-left: auto;
-    padding-left: 2em;
-}
+        .dim {
+            color: var(--dim-color);
+        }
 
-.collapsed { display: none; }
+        .timestamp {
+            color: var(--dim-color);
+            font-size: 0.9em;
+            margin-left: auto;
+            padding-left: 2em;
+        }
 
-.arrow {
-    display: inline-block;
-    transition: transform 0.2s;
-    margin-right: 0.5em;
-    color: var(--dim-color);
-}
+        .collapsed { display: none; }
 
-.arrow.collapsed { transform: rotate(-90deg); }
+        .arrow {
+            display: inline-block;
+            transition: transform 0.2s;
+            margin-right: 0.5em;
+            color: var(--dim-color);
+        }
 
-.section-title {
-    display: inline-block;
-    min-width: 5em;
-}
+        .arrow.collapsed { transform: rotate(-90deg); }
 
-.section-title.todo { color: var(--todo-color) }
-.section-title.stage { color: var(--stage-color) }
-.section-title.done { color: var(--done-color) }
+        .section-title {
+            display: inline-block;
+            min-width: 5em;
+        }
 
-.task-content {
-    flex: 1;
-}
-</style></head>
-<body>'''
+        .section-title.todo { color: var(--todo-color) }
+        .section-title.stage { color: var(--stage-color) }
+        .section-title.done { color: var(--done-color) }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 4px 8px;
+            font-family: var(--font-main);
+            font-size: 0.8em;
+            background: transparent;
+            color: var(--dim-color);
+            border: none;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .theme-toggle:hover {
+            opacity: 1.0;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+'''
 
     for page in pages:
         html_content += f'''
@@ -193,6 +226,10 @@ body {
             content.classList.add('collapsed');
             arrow.classList.add('collapsed');
         }
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('light');
     }
     </script></body></html>'''
 
