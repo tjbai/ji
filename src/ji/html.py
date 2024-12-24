@@ -25,9 +25,9 @@ def generate(repo: Repo):
             --bg-color: #282828;
             --text-color: #ebdbb2;
             --dim-color: #928374;
-            --todo-color: #98971a;
-            --stage-color: #d79921;
-            --done-color: #cc241d;
+            --todo-color: #b8bb26;
+            --stage-color: #fabd2f;
+            --done-color: #fb4934;
             --font-scale: 1em;
         }
 
