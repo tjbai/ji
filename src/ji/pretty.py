@@ -65,7 +65,7 @@ def celebrate(difficulty: int, task_content: str) -> None:
 def create_section_tree(title: str, tasks: list[Task], style: str, verbose: bool) -> Tree:
     branch = Tree(Text(title, style=f'bold {style}'))
     if tasks:
-        for i, task in enumerate(tasks):
+        for task in tasks:
             task_text = Text()
             task_text.append(f'{task.id:2}', style='dim')
             task_text.append(f' {task.content}')
@@ -74,8 +74,8 @@ def create_section_tree(title: str, tasks: list[Task], style: str, verbose: bool
 
             if verbose and task.comment_list:
                 task_node = branch.add(task_text)
-                for comment in task.comment_list:
-                    task_node.add(Text(f'{i} {comment.content}, {format_relative(task.created_at)}', style='dim'))
+                for i, comment in enumerate(task.comment_list):
+                    task_node.add(Text(f'{i} {comment.content}, {format_relative(comment.created_at)}', style='dim'))
             else:
                 branch.add(task_text)
     else:
@@ -85,7 +85,7 @@ def create_section_tree(title: str, tasks: list[Task], style: str, verbose: bool
 def pprint(page: Page, verbose: bool) -> None:
     console = Console()
 
-    main_tree = Tree(Text(f'\n记#{page.id}', style='bold'), guide_style='dim')
+    main_tree = Tree(Text(f'\n记 #{page.id}', style='bold'), guide_style='dim')
 
     todo_tasks = [task for task in page.task_map.values() if task.status == Status.TODO]
     staged_tasks = [task for task in page.task_map.values() if task.status == Status.STAGED]

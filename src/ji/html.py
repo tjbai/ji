@@ -16,116 +16,185 @@ def generate(repo: Repo):
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-<title>TJ's Tasks</title><style>
+<title>记</title><style>
 :root {
-    --width: 720px;
+    --width: 900px;
     --font-main: "Azeret Mono", monospace;
-    --background-color: #e8e8e8;
-    --heading-color: #222;
-    --text-color: #444;
-    --link-color: #3273dc;
-    --visited-color: #8b6fcb;
+    --bg-color: #1a1b1e;
+    --text-color: #c4c7c5;
+    --dim-color: #808080;
+    --todo-color: #98C379;
+    --stage-color: #E5C07B;
+    --done-color: #E06C75;
     --font-scale: 1em;
 }
+
 body {
     font-family: var(--font-main);
     font-size: var(--font-scale);
-    margin: auto;
+    margin: 2rem auto;
     padding: 20px;
     max-width: var(--width);
     text-align: left;
-    background-color: var(--background-color);
+    background-color: var(--bg-color);
     word-wrap: break-word;
-    line-height: 1.5;
+    line-height: 1.6;
     color: var(--text-color);
 }
-h2 { color: var(--heading-color); font-weight: normal; margin-bottom: 2em; }
-.page { margin-bottom: 2.5em; }
+
+.page { margin-bottom: 3em; }
+
 .page-header {
     display: flex;
-    flex-direction: horizontal;
     align-items: center;
+    margin-bottom: 1em;
     cursor: pointer;
     user-select: none;
 }
-.section { margin: 1em 0 1em 2em; }
+
+.section {
+    margin: 0.5em 0 0.5em 1.5em;
+    padding-left: 1em;
+    border-left: 1px solid var(--dim-color);
+}
+
 .section-header {
-    margin: 0.8em 0;
+    color: var(--dim-color);
+    margin: 1em 0;
     cursor: pointer;
     user-select: none;
 }
+
 .task {
     display: flex;
-    flex-direction: horizontal;
     align-items: flex-start;
-    margin: 0.5em 0 0.5em 1.5em;
+    margin: 0.5em 0;
+    padding-left: 1.5em;
 }
+
 .task-id {
-    color: var(--text-color);
+    color: var(--dim-color);
     margin-right: 1em;
     min-width: 2em;
+    text-align: right;
 }
-.todo { color: var(--link-color); }
-.staged { color: var(--link-color); }
-.pushed { color: var(--text-color); }
+
+.todo { color: var(--todo-color); }
+.staged { color: var(--stage-color); }
+.pushed { color: var(--done-color); }
+
 .comments {
     margin: 0.3em 0 0.3em 3em;
-    color: var(--text-color);
+    color: var(--dim-color);
     font-size: 0.9em;
 }
+
+.dim {
+    color: var(--dim-color);
+}
+
+.timestamp {
+    color: var(--dim-color);
+    font-size: 0.9em;
+    margin-left: auto;
+    padding-left: 2em;
+}
+
 .collapsed { display: none; }
+
 .arrow {
     display: inline-block;
     transition: transform 0.2s;
     margin-right: 0.5em;
+    color: var(--dim-color);
 }
+
 .arrow.collapsed { transform: rotate(-90deg); }
-.metadata {
-    margin-left: 1em;
+
+.section-title {
+    display: inline-block;
+    min-width: 5em;
+}
+
+.section-title.todo { color: var(--todo-color) }
+.section-title.stage { color: var(--stage-color) }
+.section-title.done { color: var(--done-color) }
+
+.task-content {
+    flex: 1;
 }
 </style></head>
-<body><h2><b>TJ's Tasks</b></h2>'''
+<body>'''
 
     for page in pages:
-        html_content += f'''<div class="page"><div class="page-header" onclick="toggleSection(this.parentElement)">
-<span class="arrow collapsed">▼</span> <time class="metadata">{format_time(page.created_at)}</time></div><div class="page-content collapsed">'''
+        html_content += f'''
+        <div class="page">
+            <div class="page-header" onclick="toggleSection(this.parentElement)">
+                <span class="arrow">▼</span>记 #{page.id}
+                <span class="timestamp">{format_time(page.created_at)}</span>
+            </div>
+        <div class="page-content">'''
 
         sections = [
-            ('Todo', {k:v for k,v in page.task_map.items() if v.status == Status.TODO}, 'todo'),
-            ('Stage', {k:v for k,v in page.task_map.items() if v.status == Status.STAGED}, 'staged'),
-            ('Done', {k:v for k,v in page.task_map.items() if v.status == Status.PUSHED}, 'pushed')
+            ('todo', {k:v for k,v in page.task_map.items() if v.status == Status.TODO}, 'todo'),
+            ('stage', {k:v for k,v in page.task_map.items() if v.status == Status.STAGED}, 'staged'),
+            ('done', {k:v for k,v in page.task_map.items() if v.status == Status.PUSHED}, 'pushed')
         ]
 
         for section_name, section_tasks, status_class in sections:
-            html_content += f'''<div class="section"><div class="section-header" onclick="toggleSection(this.parentElement)">
-<span class="arrow collapsed">▼</span>{section_name} ({len(section_tasks)})</div><div class="section-content collapsed">'''
+            html_content += f'''
+            <div class="section">
+                <div class="section-header" onclick="toggleSection(this.parentElement)">
+                    <span class="arrow">▼</span>
+                    <span class="section-title {section_name}">{section_name}</span>
+                    <span class="task-count">({len(section_tasks)})</span>
+                </div>
+            <div class="section-content">'''
 
-            for task_id, task in sorted(section_tasks.items()):
-                html_content += f'''<div class="task"><span class="task-id">{task_id}</span>
-<span class="{status_class}">{task.content}</span></div>'''
+            if not section_tasks:
+                html_content += '''
+                <div class="task">
+                    <span class="task-id"></span>
+                    <span class="dim">(empty)</span>
+                </div>'''
+            else:
+                for task_id, task in sorted(section_tasks.items()):
+                    html_content += f'''
+                    <div class="task">
+                        <span class="task-id">{task_id}</span>
+                        <span class="task-content {status_class}">{task.content}</span>
+                        <span class="timestamp">{format_time(task.last_modified)}</span>
+                    </div>'''
 
-                if task.comment_list:
-                    html_content += '<div class="comments">'
-                    for comment in task.comment_list:
-                        html_content += f'{comment.content}<br>'
-                    html_content += '</div>'
+                    if task.comment_list:
+                        html_content += '<div class="comments">'
+                        for i, comment in enumerate(task.comment_list):
+                            html_content += f'''
+                            <div class="task">
+                                <span class="task-id">{i}</span>
+                                <span class="task-content dim">{comment.content}</span>
+                                <span class="timestamp">{format_time(comment.created_at)}</span>
+                            </div>
+                            '''
 
-            html_content += '</div></div>'
-        html_content += '</div></div>'
+                        html_content += '</div>'
+            html_content += '''</div></div>'''
+        html_content += '''</div></div>'''
 
-    html_content += '''<script>
-function toggleSection(element) {
-    const content = element.querySelector(':scope > div:not(.page-header):not(.section-header)');
-    const arrow = element.querySelector(':scope > div > .arrow, :scope > .arrow');
-    if (content.classList.contains('collapsed')) {
-        content.classList.remove('collapsed');
-        arrow.classList.remove('collapsed');
-    } else {
-        content.classList.add('collapsed');
-        arrow.classList.add('collapsed');
+    html_content += '''
+    <script>
+    function toggleSection(element) {
+        const content = element.querySelector(':scope > div:not(.page-header):not(.section-header)');
+        const arrow = element.querySelector(':scope > div > .arrow, :scope > .arrow');
+        if (content.classList.contains('collapsed')) {
+            content.classList.remove('collapsed');
+            arrow.classList.remove('collapsed');
+        } else {
+            content.classList.add('collapsed');
+            arrow.classList.add('collapsed');
+        }
     }
-}
-</script></body></html>'''
+    </script></body></html>'''
 
     output_path = repo.base_dir / 'tasks.html'
     with open(output_path, 'w') as f:
