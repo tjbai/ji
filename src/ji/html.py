@@ -179,8 +179,8 @@ def generate(repo: Repo) -> str:
             <div class="section">
                 <div class="section-header" onclick="toggleSection(this.parentElement)">
                     <span class="arrow">▼</span>
-                    <span class="section-title {section_name}">{section_name}</span>
                     <span class="task-count">({len(section_tasks)})</span>
+                    <span class="section-title {section_name}">{section_name}</span>
                 </div>
             <div class="section-content">'''
 

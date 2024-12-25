@@ -11,6 +11,7 @@ class Status(str, Enum):
     TODO = 'TODO'
     STAGED = 'STAGED'
     PUSHED = 'PUSHED'
+    BACKLOG = 'BACKLOG'
 
 @dataclass
 class Comment:
@@ -31,6 +32,18 @@ class Task:
     last_modified: str
     difficulty: int = 1
 
+    @classmethod
+    def from_dict(cls, id: int, data: dict) -> 'Task':
+        return cls(
+            id=id,
+            status=Status(data['status']),
+            content=data['content'],
+            comment_list=[Comment.from_dict(c_dict) for c_dict in data['comment_list']],
+            created_at=data['created_at'],
+            last_modified=data['last_modified'],
+            difficulty=data.get('difficulty', 1)
+        )
+
 @dataclass
 class Page:
     id: int
@@ -40,23 +53,11 @@ class Page:
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Page':
-        task_map = {
-            int(k): Task(
-                id=int(k),
-                status=Status(v['status']),
-                content=v['content'],
-                comment_list=[Comment.from_dict(c_dict) for c_dict in v['comment_list']],
-                created_at=v['created_at'],
-                last_modified=v['last_modified'],
-                difficulty=v.get('difficulty', 1)
-            ) for k, v in data['task_map'].items()
-        }
-
         return cls(
             id=data['id'],
             created_at=data['created_at'],
             last_modified=data['last_modified'],
-            task_map=task_map
+            task_map={int(k): Task.from_dict(int(k), v) for k, v in data['task_map'].items()}
         )
 
     def filter(self, status: Status) -> list[Task]:
@@ -80,6 +81,7 @@ class Repo:
     pages_dir = base_dir / 'pages'
     build_dir = base_dir / 'build'
     wp_path = base_dir / 'wp'
+    bl_path = base_dir / 'bl.jsonl'
 
     # not using this rn
     wal_dir = base_dir / 'wal'
@@ -95,13 +97,13 @@ class Repo:
             with open(self.wp_path, 'r') as f:
                 self.wp = int(f.readlines()[0])
 
-    # not using this rn
     def _write_wal(self, page: Page) -> None:
         dt = datetime.fromisoformat(self.event_time)
         dir = self.wal_dir / f'{dt.year}' / f'{dt.month:02d}'
         if not dir.exists(): os.makedirs(dir)
         event = WalEvent(id=page.id, page=page, timestamp=self.event_time)
         with open(dir / 'events.log', 'a') as f:
+            print(f'writing {event}')
             f.write(str(event))
             f.write('\n')
 
@@ -141,5 +143,29 @@ class Repo:
         finally:
             if page is not None:
                 page.last_modified = self.event_time
-                if not disable_wal: self._write_wal(page)
+                if not disable_wal:
+                    print('writing to wal')
+                    self._write_wal(page)
                 self.write_page(cp, page)
+
+    @contextmanager
+    def get_backlog(self) -> Iterator[list[Task]]:
+        if self.bl_path.exists():
+            with open(self.bl_path, 'r') as f:
+                bl_tasks = [Task.from_dict(i, json.loads(line)) for i, line in enumerate(f)]
+        else:
+            with open(self.bl_path, 'w') as f:
+                bl_tasks = []
+
+        prev_len = len(bl_tasks)
+
+        try:
+            yield bl_tasks
+        finally:
+            if len(bl_tasks) == prev_len:
+                return
+
+            with open(self.bl_path, 'w') as f:
+                for task in bl_tasks:
+                    json.dump(asdict(task), f)
+                    f.write('\n')

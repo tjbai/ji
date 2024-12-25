@@ -2,7 +2,7 @@ import subprocess
 import click
 
 from .model import Status, Comment, Task, Repo
-from .pretty import pprint, celebrate
+from .pretty import pprint_page, pprint_bl, celebrate
 from .html import generate
 
 @click.group
@@ -12,11 +12,18 @@ def cli(ctx: click.Context, p: int | None) -> None:
     repo = Repo()
     ctx.obj = (repo, repo.get_wp() if p is None else p)
 
+    with repo.get_working_page(p, disable_wal=True) as page:
+        if page is None:
+            click.echo('Could not find page')
+            ctx.exit()
+
 @cli.command(name='e')
 @click.pass_obj
 def edit(ctx: tuple[Repo, int]) -> None:
     repo, _ = ctx
-    subprocess.run(['vi', repo.pages_dir])
+    subprocess.run(['vi', repo.base_dir])
+
+#### page ops
 
 @cli.command(name='n')
 @click.confirmation_option(prompt='Are you sure?')
@@ -35,11 +42,7 @@ def new(ctx: tuple[Repo, int]) -> None:
 def status(ctx: tuple[Repo, int], n: int, p: int | None, v: bool) -> None:
     repo, p = ctx
     with repo.get_working_page(p, disable_wal=True) as page:
-        if page is None:
-            click.echo('Could not find page')
-            return
-
-        pprint(page, verbose=v)
+        pprint_page(page, verbose=v)
 
 @cli.command(name='t')
 @click.argument('content')
@@ -48,10 +51,6 @@ def status(ctx: tuple[Repo, int], n: int, p: int | None, v: bool) -> None:
 def touch(ctx: tuple[Repo, int], content: str, d: int) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
-        if page is None:
-            click.echo('Could not find page')
-            return
-
         id = len(page.task_map)
         page.task_map[id] = Task(
             id=id,
@@ -70,10 +69,6 @@ def touch(ctx: tuple[Repo, int], content: str, d: int) -> None:
 def remove(ctx: tuple[Repo, int], id: int) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
-        if page is None:
-            click.echo('Could not find page')
-            return
-
         if id not in page.task_map:
             click.echo('Task does not exist')
             return
@@ -87,10 +82,6 @@ def remove(ctx: tuple[Repo, int], id: int) -> None:
 def add(ctx: tuple[Repo, int], id: int) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
-        if page is None:
-            click.echo('Could not find page')
-            return
-
         if (task := page.task_map.get(id)) is None:
             click.echo('task does not exist')
             return
@@ -104,10 +95,6 @@ def add(ctx: tuple[Repo, int], id: int) -> None:
 def restore(ctx: tuple[Repo, int], id: int) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
-        if page is None:
-            click.echo('Could not find page')
-            return
-
         if (task := page.task_map.get(id)) is None:
             click.echo('Task does not exist')
             return
@@ -125,10 +112,6 @@ def restore(ctx: tuple[Repo, int], id: int) -> None:
 def comment(ctx: tuple[Repo, int], content: str) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
-        if page is None:
-            click.echo('Could not find page')
-            return
-
         if len((staged := page.filter(Status.STAGED))) == 0:
             click.echo('No staged tasks')
             return
@@ -143,10 +126,6 @@ def comment(ctx: tuple[Repo, int], content: str) -> None:
 def push(ctx: tuple[Repo, int]) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
-        if page is None:
-            click.echo('Could not find page')
-            return
-
         if len((staged := page.filter(Status.STAGED))) == 0:
             click.echo('No staged tasks')
             return
@@ -164,3 +143,48 @@ def build(ctx: tuple[Repo, int], o: bool) -> None:
     repo, _ = ctx
     output_path = generate(repo)
     if o: subprocess.run(['open', output_path])
+
+#### backlog ops
+
+@cli.group(name='u')
+@click.pass_context
+def bl(ctx: click.Context) -> None:
+    pass
+
+@bl.command(name='st')
+@click.pass_obj
+def status_bl(obj: tuple[Repo, int]) -> None:
+    repo, _ = obj
+    with repo.get_backlog() as bl:
+        pprint_bl(bl)
+
+@bl.command(name='t')
+@click.argument('content')
+@click.pass_obj
+def touch_bl(obj: tuple[Repo, int], content: str) -> None:
+    repo, _ = obj
+    with repo.get_backlog() as bl:
+        bl.append(Task(
+            id=len(bl),
+            status=Status.TODO,
+            content=content,
+            comment_list=[],
+            last_modified=repo.event_time,
+            created_at=repo.event_time
+        ))
+
+@bl.command(name='p')
+@click.argument('id', type=int)
+@click.pass_obj
+def pop_bl(obj: tuple[Repo, int], id: int) -> None:
+    repo, _ = obj
+    with repo.get_working_page() as page, repo.get_backlog() as bl:
+        if id >= len(bl):
+            click.echo('Task index out of bounds')
+            return
+
+        task = bl.pop(id)
+        task.id = len(page.task_map)
+        task.status = Status.TODO
+        page.task_map[task.id] = task
+        click.echo('Done')

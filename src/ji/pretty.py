@@ -1,5 +1,5 @@
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from rich.tree import Tree
 from rich.text import Text
 from rich.console import Console
@@ -69,6 +69,7 @@ def create_section_tree(title: str, tasks: list[Task], style: str, verbose: bool
             task_text = Text()
             task_text.append(f'{task.id:2}', style='dim')
             task_text.append(f' {task.content}')
+
             if verbose:
                 task_text.append(f', {format_relative(task.last_modified)}', style='dim')
 
@@ -82,9 +83,8 @@ def create_section_tree(title: str, tasks: list[Task], style: str, verbose: bool
         branch.add(Text('(empty)', style='dim'))
     return branch
 
-def pprint(page: Page, verbose: bool) -> None:
+def pprint_page(page: Page, verbose: bool) -> None:
     console = Console()
-
     main_tree = Tree(Text(f'\n记 #{page.id}', style='bold'), guide_style='dim')
 
     todo_tasks = [task for task in page.task_map.values() if task.status == Status.TODO]
@@ -94,5 +94,21 @@ def pprint(page: Page, verbose: bool) -> None:
     main_tree.add(create_section_tree('todo', todo_tasks, 'green', verbose))
     main_tree.add(create_section_tree('stage', staged_tasks, 'yellow', verbose))
     main_tree.add(create_section_tree('done', pushed_tasks, 'red', verbose))
+
+    console.print(main_tree)
+
+def pprint_bl(bl: list[Task]) -> None:
+    console = Console()
+    main_tree = Tree(Text('\n旧', style='bold'), guide_style='dim')
+
+    if bl:
+        for i, task in enumerate(bl):
+            task_text = Text()
+            task_text.append(f'{i} ', style='dim')
+            task_text.append(task.content)
+            task_text.append(f', {format_relative(task.created_at)}', style='dim')
+            main_tree.add(task_text)
+    else:
+        main_tree.add(Text('(empty)', style='dim'))
 
     console.print(main_tree)

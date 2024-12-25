@@ -38,4 +38,5 @@ ji b [-o/-no]:
         YYYY_MM/
             events_{DD}.log
     wp
+    bl.jsonl
 ```
