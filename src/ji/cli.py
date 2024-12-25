@@ -158,7 +158,9 @@ def push(ctx: tuple[Repo, int]) -> None:
             task.status = Status.PUSHED
 
 @cli.command(name='b')
+@click.option('-o/-no', default=False)
 @click.pass_obj
-def build(ctx: tuple[Repo, int]) -> None:
+def build(ctx: tuple[Repo, int], o: bool) -> None:
     repo, _ = ctx
-    generate(repo)
+    output_path = generate(repo)
+    if o: subprocess.run(['open', output_path])

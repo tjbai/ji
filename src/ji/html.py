@@ -3,7 +3,7 @@ import json
 from .model import Repo, Page, Status
 from .pretty import format_time
 
-def generate(repo: Repo):
+def generate(repo: Repo) -> str:
     pages = []
     for page_path in os.listdir(repo.pages_dir):
         with open(repo.pages_dir / page_path, 'r') as f:
@@ -22,12 +22,12 @@ def generate(repo: Repo):
         :root {
             --width: 900px;
             --font-main: "Azeret Mono", monospace;
-            --bg-color: #282828;
-            --text-color: #ebdbb2;
-            --dim-color: #928374;
-            --todo-color: #b8bb26;
-            --stage-color: #fabd2f;
-            --done-color: #fb4934;
+            --bg-color: #272727;
+            --text-color: #e4d7b1;
+            --dim-color: #f2ebd8;
+            --todo-color: #abaf3f;
+            --stage-color: #f0bf4f;
+            --done-color: #e75740;
             --font-scale: 1em;
         }
 
@@ -237,3 +237,4 @@ def generate(repo: Repo):
     with open(output_path, 'w') as f:
         f.write(html_content)
     print(f'Generated html at {output_path}')
+    return output_path

@@ -26,7 +26,7 @@ ji c CONTENT:
 ji e:
     edit pages directory
 
-ji b:
+ji b [-o/-no]:
     generate html
 ```
 
