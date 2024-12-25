@@ -28,6 +28,18 @@ ji e:
 
 ji b [-o/-no]:
     generate html
+
+ji u:
+    backlog operations
+
+ji u st:
+    show backlog
+
+ji u t:
+    add task to backlog
+
+ji u p ID:
+    add task from backlog to page
 ```
 
 ```

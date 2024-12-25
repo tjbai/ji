@@ -177,8 +177,8 @@ def touch_bl(obj: tuple[Repo, int], content: str) -> None:
 @click.argument('id', type=int)
 @click.pass_obj
 def pop_bl(obj: tuple[Repo, int], id: int) -> None:
-    repo, _ = obj
-    with repo.get_working_page() as page, repo.get_backlog() as bl:
+    repo, p = obj
+    with repo.get_working_page(p) as page, repo.get_backlog() as bl:
         if id >= len(bl):
             click.echo('Task index out of bounds')
             return
