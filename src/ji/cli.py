@@ -11,8 +11,7 @@ from .html import generate
 def cli(ctx: click.Context, p: int | None) -> None:
     repo = Repo()
     ctx.obj = (repo, repo.get_wp() if p is None else p)
-
-    with repo.get_working_page(p, disable_wal=True) as page:
+    with repo.get_working_page(p) as page:
         if page is None:
             click.echo('Could not find page')
             ctx.exit()
@@ -41,7 +40,7 @@ def new(ctx: tuple[Repo, int]) -> None:
 @click.pass_obj
 def status(ctx: tuple[Repo, int], n: int, p: int | None, v: bool) -> None:
     repo, p = ctx
-    with repo.get_working_page(p, disable_wal=True) as page:
+    with repo.get_working_page(p) as page:
         pprint_page(page, verbose=v)
 
 @cli.command(name='t')

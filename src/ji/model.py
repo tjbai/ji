@@ -65,16 +65,10 @@ class Page:
 
 @dataclass
 class WalEvent:
-    id: int
-    page: Page
+    id: int | None
+    page: Page | None
+    bl: list[Task] | None
     timestamp: str
-
-    def __str__(self) -> str:
-        return json.dumps({
-            'id': self.id,
-            'page': asdict(self.page),
-            'timestamp': self.timestamp
-        })
 
 class Repo:
     base_dir = Path.home() / '.ji'
@@ -97,14 +91,20 @@ class Repo:
             with open(self.wp_path, 'r') as f:
                 self.wp = int(f.readlines()[0])
 
-    def _write_wal(self, page: Page) -> None:
+    def _write_wal(self, page: Page | None = None, bl: list[Task] | None = None) -> None:
         dt = datetime.fromisoformat(self.event_time)
         dir = self.wal_dir / f'{dt.year}' / f'{dt.month:02d}'
         if not dir.exists(): os.makedirs(dir)
-        event = WalEvent(id=page.id, page=page, timestamp=self.event_time)
+
+        event = WalEvent(
+            id=None if page is None else page.id,
+            page=page,
+            bl=bl,
+            timestamp=self.event_time
+        )
+
         with open(dir / 'events.log', 'a') as f:
-            print(f'writing {event}')
-            f.write(str(event))
+            json.dump(asdict(event), f)
             f.write('\n')
 
     def get_wp(self) -> int:
@@ -135,37 +135,41 @@ class Repo:
             json.dump(asdict(page), f)
 
     @contextmanager
-    def get_working_page(self, p: int | None = None, disable_wal: bool = False) -> Iterator[Page | None]:
+    def get_working_page(self, p: int | None = None) -> Iterator[Page | None]:
         cp = self.wp if p is None else p
         page = self.get_page(cp)
+        before = str(asdict(page))
+
         try:
             yield page
         finally:
             if page is not None:
+                if before == str(asdict(page)):
+                    return
+
                 page.last_modified = self.event_time
-                if not disable_wal:
-                    print('writing to wal')
-                    self._write_wal(page)
+                self._write_wal(page=page)
                 self.write_page(cp, page)
 
     @contextmanager
     def get_backlog(self) -> Iterator[list[Task]]:
         if self.bl_path.exists():
             with open(self.bl_path, 'r') as f:
-                bl_tasks = [Task.from_dict(i, json.loads(line)) for i, line in enumerate(f)]
+                bl = [Task.from_dict(i, json.loads(line)) for i, line in enumerate(f)]
+                prev_len = len(bl)
         else:
             with open(self.bl_path, 'w') as f:
-                bl_tasks = []
-
-        prev_len = len(bl_tasks)
+                bl = []
+                prev_len = 0
 
         try:
-            yield bl_tasks
+            yield bl
         finally:
-            if len(bl_tasks) == prev_len:
+            if len(bl) == prev_len:
                 return
 
+            self._write_wal(bl=bl)
             with open(self.bl_path, 'w') as f:
-                for task in bl_tasks:
+                for task in bl:
                     json.dump(asdict(task), f)
                     f.write('\n')
