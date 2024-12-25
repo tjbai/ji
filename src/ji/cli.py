@@ -63,7 +63,6 @@ def touch(ctx: tuple[Repo, int], content: str, d: int) -> None:
 
 @cli.command(name='rm')
 @click.argument('id', type=int)
-@click.confirmation_option(prompt='Are you sure?')
 @click.pass_obj
 def remove(ctx: tuple[Repo, int], id: int) -> None:
     repo, p = ctx
@@ -72,8 +71,10 @@ def remove(ctx: tuple[Repo, int], id: int) -> None:
             click.echo('Task does not exist')
             return
 
-        del page.task_map[id]
-        click.echo('Done')
+        task = page.task_map[id]
+        if click.confirm(f'Are you sure you want to remove \'{task.content}\'?'):
+            del page.task_map[id]
+            click.echo('Done')
 
 @cli.command(name='a')
 @click.argument('id', type=int)
