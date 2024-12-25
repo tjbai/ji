@@ -6,6 +6,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, asdict
 from enum import Enum
+from typing import Callable
 
 class Status(str, Enum):
     TODO = 'TODO'
@@ -60,8 +61,8 @@ class Page:
             task_map={int(k): Task.from_dict(int(k), v) for k, v in data['task_map'].items()}
         )
 
-    def filter(self, status: Status) -> list[Task]:
-        return [task for task in self.task_map.values() if task.status == status]
+    def filter(self, pred: Callable[[Task], bool]) -> list[Task]:
+        return [task for task in self.task_map.values() if pred(task)]
 
 @dataclass
 class WalEvent:

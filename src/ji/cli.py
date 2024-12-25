@@ -88,7 +88,7 @@ def add(ctx: tuple[Repo, int], id: int) -> None:
             return
 
         task.status = Status.STAGED
-        click.echo('done')
+        click.echo('Done')
 
 @cli.command(name='rs')
 @click.argument('id', type=int)
@@ -109,25 +109,29 @@ def restore(ctx: tuple[Repo, int], id: int) -> None:
 
 @cli.command(name='c')
 @click.argument('content')
+@click.option('-id', type=int, default=None)
 @click.pass_obj
-def comment(ctx: tuple[Repo, int], content: str) -> None:
+def comment(ctx: tuple[Repo, int], content: str, id: int | None) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
-        if len((staged := page.filter(Status.STAGED))) == 0:
-            click.echo('No staged tasks')
+        if len((
+            to_comment := page.filter(
+            lambda t: (t.id == id) if id is not None else (t.status == Status.STAGED))
+        )) == 0:
+            click.echo('No staged tasks or tasks with that id')
             return
 
-        for task in staged:
+        for task in to_comment:
             task.comment_list.append(Comment(created_at=repo.event_time, content=content))
 
-        click.echo(f'{len(staged)} task(s) updated with \'{content}\'')
+        click.echo(f'{len(to_comment)} task(s) updated with \'{content}\'')
 
 @cli.command(name='p')
 @click.pass_obj
 def push(ctx: tuple[Repo, int]) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
-        if len((staged := page.filter(Status.STAGED))) == 0:
+        if len((staged := page.filter(lambda t: t.status == Status.STAGED))) == 0:
             click.echo('No staged tasks')
             return
 
