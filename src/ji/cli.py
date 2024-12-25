@@ -67,14 +67,15 @@ def touch(ctx: tuple[Repo, int], content: str, d: int) -> None:
 def remove(ctx: tuple[Repo, int], id: int) -> None:
     repo, p = ctx
     with repo.get_working_page(p) as page:
-        if id not in page.task_map:
+        if (task := page.task_map.get(id)) is None:
             click.echo('Task does not exist')
             return
 
-        task = page.task_map[id]
-        if click.confirm(f'Are you sure you want to remove \'{task.content}\'?'):
-            del page.task_map[id]
-            click.echo('Done')
+        if not click.confirm(f'Are you sure you want to remove \'{task.content}\'?'):
+            return
+
+        del page.task_map[id]
+        click.echo('Done')
 
 @cli.command(name='a')
 @click.argument('id', type=int)
@@ -128,6 +129,9 @@ def push(ctx: tuple[Repo, int]) -> None:
     with repo.get_working_page(p) as page:
         if len((staged := page.filter(Status.STAGED))) == 0:
             click.echo('No staged tasks')
+            return
+
+        if not click.confirm(f'Are you sure you want to push {len(staged)} task(s)?'):
             return
 
         for task in staged:
