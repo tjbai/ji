@@ -25,9 +25,9 @@ def generate(repo: Repo) -> str:
             --bg-color: #272727;
             --text-color: #e4d7b1;
             --dim-color: #f2ebd8;
-            --todo-color: #abaf3f;
+            --todo-color: #e75740;
             --stage-color: #f0bf4f;
-            --done-color: #e75740;
+            --done-color: #abaf3f;
             --font-scale: 1em;
         }
 
@@ -45,12 +45,12 @@ def generate(repo: Repo) -> str:
         }
 
         body.light {
-            --bg-color: #fbf1c7;
-            --text-color: #3c3836;
-            --dim-color: #928374;
-            --todo-color: #79740e;
-            --stage-color: #b57614;
-            --done-color: #9d0006;
+            --bg-color: ##e8e8e8;
+            --text-color: #444;
+            --dim-color: #444;
+            --todo-color: #E06C75;
+            --done-color: #3D9970;
+            --stage-color: #F4B942;
         }
 
         .page { margin-bottom: 3em; }

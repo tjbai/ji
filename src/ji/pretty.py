@@ -91,9 +91,9 @@ def pprint_page(page: Page, verbose: bool) -> None:
     staged_tasks = [task for task in page.task_map.values() if task.status == Status.STAGED]
     pushed_tasks = [task for task in page.task_map.values() if task.status == Status.PUSHED]
 
-    main_tree.add(create_section_tree('todo', todo_tasks, 'green', verbose))
+    main_tree.add(create_section_tree('todo', todo_tasks, 'red', verbose))
     main_tree.add(create_section_tree('stage', staged_tasks, 'yellow', verbose))
-    main_tree.add(create_section_tree('done', pushed_tasks, 'red', verbose))
+    main_tree.add(create_section_tree('done', pushed_tasks, 'green', verbose))
 
     console.print(main_tree)
 
