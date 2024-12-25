@@ -216,22 +216,34 @@ def generate(repo: Repo) -> str:
 
     html_content += '''
     <script>
-    function toggleSection(element) {
-        const content = element.querySelector(':scope > div:not(.page-header):not(.section-header)');
-        const arrow = element.querySelector(':scope > div > .arrow, :scope > .arrow');
-        if (content.classList.contains('collapsed')) {
-            content.classList.remove('collapsed');
-            arrow.classList.remove('collapsed');
-        } else {
-            content.classList.add('collapsed');
-            arrow.classList.add('collapsed');
+        function toggleSection(element) {
+            const content = element.querySelector(':scope > div:not(.page-header):not(.section-header)');
+            const arrow = element.querySelector(':scope > div > .arrow, :scope > .arrow');
+            if (content.classList.contains('collapsed')) {
+                content.classList.remove('collapsed');
+                arrow.classList.remove('collapsed');
+            } else {
+                content.classList.add('collapsed');
+                arrow.classList.add('collapsed');
+            }
         }
-    }
 
-    function toggleTheme() {
-        document.body.classList.toggle('light');
-    }
-    </script></body></html>'''
+        function toggleTheme() {
+            document.body.classList.toggle('light');
+            localStorage.setItem('theme', document.body.classList.value);
+        }
+
+        function loadSavedTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.body.classList.value = savedTheme;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadSavedTheme);
+    </script>
+    </body>
+</html>'''
 
     output_path = repo.base_dir / 'tasks.html'
     with open(output_path, 'w') as f:
