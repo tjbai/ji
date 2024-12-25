@@ -67,7 +67,7 @@ def create_section_tree(title: str, tasks: list[Task], style: str, verbose: bool
     if tasks:
         for task in tasks:
             task_text = Text()
-            task_text.append(f'{task.id:2}', style='dim')
+            task_text.append(f'{task.id}', style='dim')
             task_text.append(f' {task.content}')
 
             if verbose:
