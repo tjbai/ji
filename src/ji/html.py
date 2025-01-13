@@ -163,10 +163,10 @@ def generate(repo: Repo) -> str:
         html_content += f'''
         <div class="page">
             <div class="page-header" onclick="toggleSection(this.parentElement)">
-                <span class="arrow">▼</span>记 #{page.id}
+                <span class="arrow collapsed">▼</span>记 #{page.id}
                 <span class="timestamp">{format_time(page.created_at)}</span>
             </div>
-        <div class="page-content">'''
+        <div class="page-content collapsed">'''
 
         sections = [
             ('todo', {k:v for k,v in page.task_map.items() if v.status == Status.TODO}, 'todo'),
